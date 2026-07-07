@@ -256,10 +256,25 @@
       color: var(--cds-text-primary);
       cursor: pointer;
       letter-spacing: .16px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
     }
     .task-item.done .task-label {
       text-decoration: line-through;
       color: var(--cds-text-secondary);
+    }
+    .task-deadline {
+      font-size: 12px;
+      color: var(--cds-text-secondary);
+      font-weight: 400;
+    }
+    .task-item.overdue .task-deadline {
+      color: var(--cds-support-error);
+      font-weight: 500;
+    }
+    .task-item.overdue:not(.done) {
+      border-left: 3px solid var(--cds-support-error);
     }
 
     /* Carbon Ghost icon button (delete) */
@@ -419,6 +434,15 @@
         aria-label="New task"
       />
     </div>
+    <div class="cds--form-item" style="max-width: 180px;">
+      <label class="cds--label" for="deadline-input" id="deadline-label">Deadline (time)</label>
+      <input
+        id="deadline-input"
+        class="cds--text-input"
+        type="time"
+        aria-label="Task deadline"
+      />
+    </div>
     <button id="add-btn" class="cds--btn--primary">Add task</button>
   </div>
 
@@ -526,6 +550,42 @@
     };
 
     function activeTasks() { return state[state.activeTab]; }
+    
+    /* ── Deadline helpers ── */
+    function checkOverdue(deadline, tabType) {
+      if (!deadline) return false;
+      const now = new Date();
+      
+      if (tabType === 'daily') {
+        // For daily tasks, check if time has passed today
+        const [hours, minutes] = deadline.split(':').map(Number);
+        const deadlineTime = new Date();
+        deadlineTime.setHours(hours, minutes, 0, 0);
+        return now > deadlineTime;
+      } else {
+        // For weekly/monthly, check if date has passed
+        const deadlineDate = new Date(deadline);
+        deadlineDate.setHours(23, 59, 59, 999); // End of deadline day
+        return now > deadlineDate;
+      }
+    }
+    
+    function formatDeadline(deadline, tabType) {
+      if (!deadline) return '';
+      
+      if (tabType === 'daily') {
+        // Format time (e.g., "Due: 2:30 PM")
+        const [hours, minutes] = deadline.split(':').map(Number);
+        const period = hours >= 12 ? 'PM' : 'AM';
+        const displayHours = hours % 12 || 12;
+        return `Due: ${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+      } else {
+        // Format date (e.g., "Due: Jul 15, 2026")
+        const date = new Date(deadline);
+        const options = { month: 'short', day: 'numeric', year: 'numeric' };
+        return `Due: ${date.toLocaleDateString('en-US', options)}`;
+      }
+    }
 
     function loadState() {
       try {
@@ -566,12 +626,23 @@
       const empty = document.getElementById('empty-msg');
       list.innerHTML = '';
 
-      // Sync tab active state
+      // Sync tab active state and update deadline input
       document.querySelectorAll('.checklist-tab').forEach(btn => {
         const active = btn.dataset.tab === state.activeTab;
         btn.classList.toggle('active', active);
         btn.setAttribute('aria-selected', active ? 'true' : 'false');
       });
+      
+      // Update deadline input type based on active tab
+      const deadlineInput = document.getElementById('deadline-input');
+      const deadlineLabel = document.getElementById('deadline-label');
+      if (state.activeTab === 'daily') {
+        deadlineInput.type = 'time';
+        deadlineLabel.textContent = 'Deadline (time)';
+      } else {
+        deadlineInput.type = 'date';
+        deadlineLabel.textContent = 'Deadline (date)';
+      }
 
       const tasks = activeTasks();
       if (tasks.length === 0) {
@@ -581,6 +652,12 @@
         tasks.forEach((task, idx) => {
           const li = document.createElement('li');
           li.className = 'task-item' + (task.done ? ' done' : '');
+          
+          // Check if task is overdue
+          if (task.deadline && !task.done) {
+            const isOverdue = checkOverdue(task.deadline, state.activeTab);
+            if (isOverdue) li.classList.add('overdue');
+          }
 
           // Carbon checkbox
           const cbWrap = document.createElement('label');
@@ -602,7 +679,19 @@
 
           const label = document.createElement('span');
           label.className = 'task-label';
-          label.textContent = task.text;
+          
+          const taskText = document.createElement('span');
+          taskText.textContent = task.text;
+          label.appendChild(taskText);
+          
+          // Add deadline display
+          if (task.deadline) {
+            const deadlineSpan = document.createElement('span');
+            deadlineSpan.className = 'task-deadline';
+            deadlineSpan.textContent = formatDeadline(task.deadline, state.activeTab);
+            label.appendChild(deadlineSpan);
+          }
+          
           label.addEventListener('click', () => toggleTask(idx));
 
           const del = document.createElement('button');
@@ -695,10 +784,10 @@
     setInterval(() => updateBobWidget(state.health), 10000);
 
     /* ── Actions ── */
-    function addTask(text) {
+    function addTask(text, deadline) {
       text = text.trim();
       if (!text) return;
-      activeTasks().push({ id: Date.now(), text, done: false });
+      activeTasks().push({ id: Date.now(), text, done: false, deadline: deadline || null });
       recalcHealth();
       saveAndBroadcast();
       render();
@@ -721,15 +810,19 @@
     /* ── UI events ── */
     document.getElementById('add-btn').addEventListener('click', () => {
       const input = document.getElementById('new-task-input');
-      addTask(input.value);
+      const deadlineInput = document.getElementById('deadline-input');
+      addTask(input.value, deadlineInput.value);
       input.value = '';
+      deadlineInput.value = '';
       input.focus();
     });
 
     document.getElementById('new-task-input').addEventListener('keydown', e => {
       if (e.key === 'Enter') {
-        addTask(e.target.value);
+        const deadlineInput = document.getElementById('deadline-input');
+        addTask(e.target.value, deadlineInput.value);
         e.target.value = '';
+        deadlineInput.value = '';
       }
     });
 
