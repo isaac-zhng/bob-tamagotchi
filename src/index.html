@@ -108,12 +108,14 @@
       color: #c6c6c6;
       background: transparent;
       border: 1px solid #525252;
-      padding: 0 var(--cds-spacing-04);
+      padding: 0;
       height: 32px;
+      width: 88px;
       cursor: pointer;
       white-space: nowrap;
       display: inline-flex;
       align-items: center;
+      justify-content: center;
     }
     .cds--btn--ghost--sm:hover {
       background: #353535;
@@ -1125,6 +1127,7 @@
     }
     
     loadState();
+    saveAndBroadcast();
     render();
   </script>
 </body>

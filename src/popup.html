@@ -157,7 +157,8 @@
     </div>
 
     <div id="avatar-area">
-      <img id="avatar" src="assets/bob.svg" width="88" height="88" alt="Bob" aria-hidden="true" />
+      <object id="avatar" data="assets/bob.svg" type="image/svg+xml" width="88" height="88" aria-hidden="true"
+        style="display:block;pointer-events:none;"></object>
     </div>
 
     <div id="bubble" role="status" aria-live="polite">Hello! Add some tasks!</div>
@@ -177,6 +178,21 @@
   </div>
 
   <script>
+    /* ── Mouth paths per mood ── */
+    const MOUTHS = {
+      happy:   'M144.5,174.4c12,5,18,5.5,30,0',
+      neutral: 'M144.5,174.4h30',
+      sad:     'M144.5,179.4c12,-5,18,-5.5,30,0',
+    };
+
+    function updateMouth(health) {
+      const mood = health > 60 ? 'happy' : health > 30 ? 'neutral' : 'sad';
+      const svgDoc = document.getElementById('avatar').contentDocument;
+      if (!svgDoc) return;
+      const mouth = svgDoc.getElementById('bob-mouth');
+      if (mouth) mouth.setAttribute('d', MOUTHS[mood]);
+    }
+
     /* ── Quips ── */
     const QUIPS = {
       happy:   ["You're crushing it!", "Tasks done = Bob happy!", "Productivity level: max!", "Keep it up!", "Look at you go!"],
@@ -203,21 +219,17 @@
       document.getElementById('hp-pct').textContent = pct + '%';
       document.getElementById('hp-track').setAttribute('aria-valuenow', pct);
 
-      // Task summary
-      const tasks = state.tasks || [];
-      const done  = tasks.filter(t => t.done).length;
+      // Task summary — state uses daily/weekly/monthly arrays
+      const allTasks = [...(state.daily || []), ...(state.weekly || []), ...(state.monthly || [])];
+      const done     = allTasks.filter(t => t.done).length;
       document.getElementById('task-summary').textContent =
-        tasks.length === 0 ? 'No tasks yet' : done + '\u202f/\u202f' + tasks.length + ' tasks complete';
+        allTasks.length === 0 ? 'No tasks yet' : done + '\u202f/\u202f' + allTasks.length + ' tasks complete';
 
       // Speech bubble
       document.getElementById('bubble').textContent = getQuip(pct);
-    }
 
-    function loadState() {
-      try {
-        const saved = localStorage.getItem('bob-state');
-        if (saved) state = JSON.parse(saved);
-      } catch (_) {}
+      // Mouth expression
+      updateMouth(pct);
     }
 
     /* ── IPC sync ── */
@@ -226,6 +238,8 @@
         try { state = JSON.parse(json); } catch (_) {}
         updateUI();
       });
+      // Request current state from main window on load
+      window.electronAPI.requestState();
     }
 
     document.getElementById('close-btn').addEventListener('click', () => {
@@ -235,7 +249,8 @@
     /* Rotate quip every 8 s */
     setInterval(updateUI, 8000);
 
-    loadState();
+    /* Wait for the SVG to load before first render so mouth swap works */
+    document.getElementById('avatar').addEventListener('load', updateUI);
     updateUI();
   </script>
 </body>

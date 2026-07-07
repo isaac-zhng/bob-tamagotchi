@@ -21,13 +21,14 @@ function createMainWindow() {
 }
 
 function createBobWindow() {
-  if (bobWindow && !bobWindow.isDestroyed()) { bobWindow.focus(); return; }
+  if (bobWindow && !bobWindow.isDestroyed()) return;
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
   bobWindow = new BrowserWindow({
     width: 220, height: 320,
     x: width - 240, y: height - 360,
     resizable: false, alwaysOnTop: true,
     frame: false, transparent: true, hasShadow: true,
+    focusable: false, skipTaskbar: true,
     title: 'IBM Bob',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -45,12 +46,19 @@ app.whenReady().then(() => {
   // Register IPC handlers
   ipcMain.on('open-bob-popup',  () => createBobWindow());
   ipcMain.on('close-bob-popup', () => { if (bobWindow && !bobWindow.isDestroyed()) bobWindow.close(); });
+  let lastStateJSON = null;
+
   ipcMain.on('state-update', (event, stateJSON) => {
+    lastStateJSON = stateJSON;
     const sender = event.sender;
     if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents !== sender)
       mainWindow.webContents.send('state-sync', stateJSON);
     if (bobWindow && !bobWindow.isDestroyed() && bobWindow.webContents !== sender)
       bobWindow.webContents.send('state-sync', stateJSON);
+  });
+
+  ipcMain.on('request-state', (event) => {
+    if (lastStateJSON) event.sender.send('state-sync', lastStateJSON);
   });
   ipcMain.on('bob-move', (event, { x, y }) => {
     if (bobWindow && !bobWindow.isDestroyed()) bobWindow.setPosition(x, y);
