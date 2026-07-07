@@ -2,7 +2,7 @@
   "name": "ibm-bob-todogotchi",
   "productName": "IBM Bob Todogotchi",
   "version": "1.0.0",
-  "description": "IBM Bob Checklist Notepad & Tamagotchi",
+  "description": "A to-do list with Bob inspired by tamagotchis",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
