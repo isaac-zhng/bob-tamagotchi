@@ -4,159 +4,335 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>IBM Bob Notepad</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
+    /* ── Carbon design tokens ── */
+    :root {
+      --cds-background:          #f4f4f4;
+      --cds-layer-01:            #ffffff;
+      --cds-layer-02:            #e8e8e8;
+      --cds-border-subtle-01:    #e0e0e0;
+      --cds-border-strong-01:    #8d8d8d;
+      --cds-text-primary:        #161616;
+      --cds-text-secondary:      #525252;
+      --cds-text-placeholder:    #a8a8a8;
+      --cds-text-on-color:       #ffffff;
+      --cds-interactive:         #0f62fe;
+      --cds-interactive-hover:   #0353e9;
+      --cds-focus:               #0f62fe;
+      --cds-support-success:     #198038;
+      --cds-support-warning:     #f1c21b;
+      --cds-support-error:       #da1e28;
+      --cds-icon-primary:        #161616;
+      --cds-icon-secondary:      #525252;
+      --cds-icon-on-color:       #ffffff;
+      --cds-shell-header-bg:     #161616;
+      --cds-shell-header-text:   #f4f4f4;
+      --cds-shell-header-border: #393939;
+      --cds-spacing-01: 2px;
+      --cds-spacing-02: 4px;
+      --cds-spacing-03: 8px;
+      --cds-spacing-04: 12px;
+      --cds-spacing-05: 16px;
+      --cds-spacing-06: 24px;
+      --cds-spacing-07: 32px;
+      --cds-spacing-08: 40px;
+    }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
-      background: #f4f4f4;
-      color: #161616;
+      font-family: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.42857;
+      background: var(--cds-background);
+      color: var(--cds-text-primary);
       height: 100vh;
       display: flex;
       flex-direction: column;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* ── Header ── */
-    header {
-      background: #0f62fe;
-      color: #fff;
-      padding: 14px 20px;
+    /* ── Carbon UI Shell Header ── */
+    .cds--header {
+      background: var(--cds-shell-header-bg);
+      border-bottom: 1px solid var(--cds-shell-header-border);
+      height: 48px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      padding: 0 var(--cds-spacing-05);
       flex-shrink: 0;
+      gap: var(--cds-spacing-05);
     }
-    header h1 { font-size: 18px; font-weight: 600; letter-spacing: .3px; }
-    #bob-health-bar {
+    .cds--header__name {
+      color: var(--cds-shell-header-text);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: .1px;
+      white-space: nowrap;
+      text-decoration: none;
+      margin-right: auto;
+    }
+    .cds--header__name span {
+      font-weight: 400;
+      color: #c6c6c6;
+    }
+
+    /* health bar in header */
+    .header-health {
       display: flex;
       align-items: center;
-      gap: 10px;
-      font-size: 13px;
+      gap: var(--cds-spacing-03);
+      font-size: 12px;
+      color: #c6c6c6;
+      white-space: nowrap;
     }
-    #bob-health-bar span { white-space: nowrap; }
-    #health-track {
-      width: 160px;
-      height: 12px;
-      background: rgba(255,255,255,0.3);
-      border-radius: 6px;
+    .cds--progress-bar--header {
+      width: 140px;
+      height: 4px;
+      background: #393939;
       overflow: hidden;
     }
-    #health-fill {
+    .cds--progress-bar__bar {
       height: 100%;
-      background: #42be65;
-      border-radius: 6px;
+      background: var(--cds-support-success);
       transition: width .5s ease, background .5s ease;
     }
-    #bob-toggle-btn {
-      background: rgba(255,255,255,0.15);
-      border: 1px solid rgba(255,255,255,0.4);
-      color: #fff;
-      padding: 5px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 13px;
-    }
-    #bob-toggle-btn:hover { background: rgba(255,255,255,0.25); }
 
-    /* ── Add task row ── */
-    #add-row {
+    /* ── Carbon Ghost Button (header) ── */
+    .cds--btn--ghost--sm {
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 400;
+      color: #c6c6c6;
+      background: transparent;
+      border: 1px solid #525252;
+      padding: 0 var(--cds-spacing-04);
+      height: 32px;
+      cursor: pointer;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+    }
+    .cds--btn--ghost--sm:hover {
+      background: #353535;
+      color: #f4f4f4;
+      border-color: #6f6f6f;
+    }
+
+    /* ── Toolbar row ── */
+    .cds--toolbar {
       display: flex;
-      gap: 8px;
-      padding: 16px 20px 8px;
+      align-items: flex-end;
+      gap: var(--cds-spacing-03);
+      padding: var(--cds-spacing-05) var(--cds-spacing-05) var(--cds-spacing-03);
+      flex-shrink: 0;
+      background: var(--cds-background);
+    }
+
+    /* ── Carbon Text Input ── */
+    .cds--form-item { flex: 1; display: flex; flex-direction: column; gap: var(--cds-spacing-01); }
+    .cds--label {
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--cds-text-secondary);
+      letter-spacing: .32px;
+      margin-bottom: var(--cds-spacing-01);
+    }
+    .cds--text-input {
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--cds-text-primary);
+      background: var(--cds-layer-01);
+      border: none;
+      border-bottom: 1px solid var(--cds-border-strong-01);
+      outline: none;
+      height: 40px;
+      padding: 0 var(--cds-spacing-04);
+      width: 100%;
+    }
+    .cds--text-input::placeholder { color: var(--cds-text-placeholder); }
+    .cds--text-input:focus {
+      outline: 2px solid var(--cds-focus);
+      outline-offset: -2px;
+    }
+
+    /* ── Carbon Primary Button ── */
+    .cds--btn--primary {
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 400;
+      background: var(--cds-interactive);
+      color: var(--cds-text-on-color);
+      border: none;
+      height: 40px;
+      padding: 0 var(--cds-spacing-07);
+      cursor: pointer;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      letter-spacing: .16px;
       flex-shrink: 0;
     }
-    #new-task-input {
-      flex: 1;
-      padding: 9px 12px;
-      border: 1px solid #c6c6c6;
-      border-radius: 4px;
-      font-size: 14px;
-      outline: none;
+    .cds--btn--primary:hover { background: var(--cds-interactive-hover); }
+    .cds--btn--primary:focus {
+      outline: 2px solid var(--cds-focus);
+      outline-offset: -2px;
+      box-shadow: inset 0 0 0 1px var(--cds-focus), inset 0 0 0 2px #ffffff;
     }
-    #new-task-input:focus { border-color: #0f62fe; box-shadow: 0 0 0 2px rgba(15,98,254,0.2); }
-    #add-btn {
-      padding: 9px 18px;
-      background: #0f62fe;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-    }
-    #add-btn:hover { background: #0353e9; }
 
     /* ── Task list ── */
     #task-list-wrapper {
       flex: 1;
       overflow-y: auto;
-      padding: 8px 20px 20px;
+      padding: var(--cds-spacing-03) var(--cds-spacing-05) var(--cds-spacing-06);
     }
     #task-list { list-style: none; }
+
+    /* Carbon Structured List row style */
     .task-item {
       display: flex;
       align-items: center;
-      gap: 12px;
-      background: #fff;
-      border: 1px solid #e0e0e0;
-      border-radius: 6px;
-      padding: 10px 14px;
-      margin-bottom: 8px;
-      transition: opacity .3s;
+      gap: var(--cds-spacing-04);
+      background: var(--cds-layer-01);
+      border-bottom: 1px solid var(--cds-border-subtle-01);
+      padding: var(--cds-spacing-04) var(--cds-spacing-05);
+      transition: background .1s;
     }
-    .task-item.done { opacity: 0.5; }
-    .task-item input[type="checkbox"] {
-      width: 18px; height: 18px;
-      accent-color: #0f62fe;
-      cursor: pointer;
+    .task-item:first-child { border-top: 1px solid var(--cds-border-subtle-01); }
+    .task-item:hover { background: #e8e8e8; }
+    .task-item.done { background: var(--cds-background); }
+
+    /* Carbon Checkbox */
+    .cds--checkbox-wrapper {
+      display: flex;
+      align-items: center;
       flex-shrink: 0;
+      position: relative;
     }
+    .cds--checkbox {
+      position: absolute;
+      opacity: 0;
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      margin: 0;
+      z-index: 1;
+    }
+    .cds--checkbox-appearance {
+      width: 16px;
+      height: 16px;
+      border: 1px solid var(--cds-icon-primary);
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      pointer-events: none;
+    }
+    .cds--checkbox:checked + .cds--checkbox-appearance {
+      background: var(--cds-interactive);
+      border-color: var(--cds-interactive);
+    }
+    .cds--checkbox:checked + .cds--checkbox-appearance::after {
+      content: '';
+      display: block;
+      width: 9px;
+      height: 5px;
+      border-left: 2px solid #fff;
+      border-bottom: 2px solid #fff;
+      transform: rotate(-45deg) translateY(-1px);
+    }
+    .cds--checkbox:focus + .cds--checkbox-appearance {
+      outline: 2px solid var(--cds-focus);
+      outline-offset: 1px;
+    }
+
     .task-label {
       flex: 1;
       font-size: 14px;
-      line-height: 1.4;
+      line-height: 1.42857;
+      color: var(--cds-text-primary);
       cursor: pointer;
+      letter-spacing: .16px;
     }
-    .task-item.done .task-label { text-decoration: line-through; color: #6f6f6f; }
-    .delete-btn {
+    .task-item.done .task-label {
+      text-decoration: line-through;
+      color: var(--cds-text-secondary);
+    }
+
+    /* Carbon Ghost icon button (delete) */
+    .cds--btn--ghost--icon {
       background: none;
       border: none;
-      color: #6f6f6f;
+      color: var(--cds-icon-secondary);
       cursor: pointer;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 18px;
       line-height: 1;
-      padding: 0 4px;
-      border-radius: 3px;
+      flex-shrink: 0;
     }
-    .delete-btn:hover { color: #da1e28; background: #fff1f1; }
+    .cds--btn--ghost--icon:hover {
+      background: #e8e8e8;
+      color: var(--cds-support-error);
+    }
+    .cds--btn--ghost--icon:focus {
+      outline: 2px solid var(--cds-focus);
+      outline-offset: -2px;
+    }
 
-    /* ── Empty state ── */
+    /* ── Empty state (Carbon inline notification style) ── */
     #empty-msg {
-      text-align: center;
-      color: #a8a8a8;
-      padding: 60px 20px;
+      display: none;
+      margin-top: var(--cds-spacing-07);
+      padding: var(--cds-spacing-05);
+      background: var(--cds-layer-01);
+      border-left: 3px solid var(--cds-interactive);
+      color: var(--cds-text-secondary);
       font-size: 14px;
+      letter-spacing: .16px;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>IBM Bob Notepad</h1>
-    <div id="bob-health-bar">
+
+  <!-- Carbon UI Shell Header -->
+  <header class="cds--header" role="banner">
+    <a class="cds--header__name" href="#">IBM Bob <span>Notepad</span></a>
+    <div class="header-health" aria-label="Bob's health">
       <span id="health-label">Bob: 100%</span>
-      <div id="health-track"><div id="health-fill" style="width:100%"></div></div>
+      <div class="cds--progress-bar--header" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
+        <div id="health-fill" class="cds--progress-bar__bar" style="width:100%"></div>
+      </div>
     </div>
-    <button id="bob-toggle-btn">Show Bob</button>
+    <button id="bob-toggle-btn" class="cds--btn--ghost--sm">Show Bob</button>
   </header>
 
-  <div id="add-row">
-    <input id="new-task-input" type="text" placeholder="Add a new task…" autocomplete="off" />
-    <button id="add-btn">Add</button>
+  <!-- Add task toolbar -->
+  <div class="cds--toolbar">
+    <div class="cds--form-item">
+      <label class="cds--label" for="new-task-input">New task</label>
+      <input
+        id="new-task-input"
+        class="cds--text-input"
+        type="text"
+        placeholder="Describe your task…"
+        autocomplete="off"
+        aria-label="New task"
+      />
+    </div>
+    <button id="add-btn" class="cds--btn--primary">Add task</button>
   </div>
 
+  <!-- Task list -->
   <div id="task-list-wrapper">
-    <ul id="task-list"></ul>
-    <p id="empty-msg">No tasks yet. Add one above!</p>
+    <ul id="task-list" role="list"></ul>
+    <div id="empty-msg" role="status">No tasks yet — add one above to get started.</div>
   </div>
 
   <script>
@@ -185,7 +361,7 @@
 
     /* ── Render ── */
     function render() {
-      const list = document.getElementById('task-list');
+      const list  = document.getElementById('task-list');
       const empty = document.getElementById('empty-msg');
       list.innerHTML = '';
 
@@ -197,37 +373,53 @@
           const li = document.createElement('li');
           li.className = 'task-item' + (task.done ? ' done' : '');
 
+          // Carbon checkbox
+          const cbWrap = document.createElement('label');
+          cbWrap.className = 'cds--checkbox-wrapper';
+          cbWrap.title = task.done ? 'Mark incomplete' : 'Mark complete';
+
           const cb = document.createElement('input');
           cb.type = 'checkbox';
+          cb.className = 'cds--checkbox';
           cb.checked = task.done;
-          cb.addEventListener('change', () => { toggleTask(idx); });
+          cb.setAttribute('aria-label', task.text);
+          cb.addEventListener('change', () => toggleTask(idx));
+
+          const cbAppearance = document.createElement('span');
+          cbAppearance.className = 'cds--checkbox-appearance';
+
+          cbWrap.appendChild(cb);
+          cbWrap.appendChild(cbAppearance);
 
           const label = document.createElement('span');
           label.className = 'task-label';
           label.textContent = task.text;
-          label.addEventListener('click', () => { toggleTask(idx); });
+          label.addEventListener('click', () => toggleTask(idx));
 
           const del = document.createElement('button');
-          del.className = 'delete-btn';
-          del.textContent = '×';
+          del.className = 'cds--btn--ghost--icon';
+          del.innerHTML = '&#x2715;';
           del.title = 'Delete task';
-          del.addEventListener('click', () => { deleteTask(idx); });
+          del.setAttribute('aria-label', 'Delete: ' + task.text);
+          del.addEventListener('click', () => deleteTask(idx));
 
-          li.appendChild(cb);
+          li.appendChild(cbWrap);
           li.appendChild(label);
           li.appendChild(del);
           list.appendChild(li);
         });
       }
 
-      // Update health bar
-      const pct = state.health;
+      // Health bar
+      const pct  = state.health;
       const fill = document.getElementById('health-fill');
       fill.style.width = pct + '%';
-      fill.style.background = pct > 60 ? '#42be65' : pct > 30 ? '#f1c21b' : '#da1e28';
+      fill.style.background =
+        pct > 60 ? '#24a148' : pct > 30 ? '#f1c21b' : '#da1e28';
       document.getElementById('health-label').textContent = 'Bob: ' + pct + '%';
+      document.querySelector('[role="progressbar"]').setAttribute('aria-valuenow', pct);
 
-      // Bob toggle button label
+      // Toggle button label
       document.getElementById('bob-toggle-btn').textContent =
         state.bobVisible ? 'Hide Bob' : 'Show Bob';
     }
@@ -261,13 +453,13 @@
       const input = document.getElementById('new-task-input');
       addTask(input.value);
       input.value = '';
+      input.focus();
     });
 
     document.getElementById('new-task-input').addEventListener('keydown', e => {
       if (e.key === 'Enter') {
-        const input = e.target;
-        addTask(input.value);
-        input.value = '';
+        addTask(e.target.value);
+        e.target.value = '';
       }
     });
 

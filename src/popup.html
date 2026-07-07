@@ -3,193 +3,248 @@
 <head>
   <meta charset="UTF-8" />
   <title>IBM Bob</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
+    /* ── Carbon tokens ── */
+    :root {
+      --cds-background:       #f4f4f4;
+      --cds-layer-01:         #ffffff;
+      --cds-border-subtle-01: #e0e0e0;
+      --cds-border-strong-01: #8d8d8d;
+      --cds-text-primary:     #161616;
+      --cds-text-secondary:   #525252;
+      --cds-text-on-color:    #ffffff;
+      --cds-interactive:      #0f62fe;
+      --cds-support-success:  #24a148;
+      --cds-support-warning:  #f1c21b;
+      --cds-support-error:    #da1e28;
+      --cds-spacing-01: 2px;
+      --cds-spacing-02: 4px;
+      --cds-spacing-03: 8px;
+      --cds-spacing-04: 12px;
+      --cds-spacing-05: 16px;
+    }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     html, body {
-      width: 220px; height: 320px;
+      width: 220px;
+      height: 340px;
       overflow: hidden;
       background: transparent;
-      font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+      font-family: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
+      font-size: 12px;
+      -webkit-font-smoothing: antialiased;
       -webkit-app-region: drag;
       user-select: none;
     }
 
+    /* ── Card (Carbon Tile) ── */
     #card {
-      width: 200px;
-      background: #fff;
-      border-radius: 16px;
-      border: 2px solid #e0e0e0;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.18);
-      padding: 14px 14px 16px;
-      margin: 10px auto 0;
+      width: 204px;
+      margin: 8px auto 0;
+      background: var(--cds-layer-01);
+      border: 1px solid var(--cds-border-subtle-01);
+      /* Carbon uses no border-radius on tiles — sharp corners */
       display: flex;
       flex-direction: column;
+      align-items: stretch;
+    }
+
+    /* ── Card header bar (Carbon UI Shell mini) ── */
+    #card-header {
+      background: #161616;
+      padding: var(--cds-spacing-03) var(--cds-spacing-04);
+      display: flex;
       align-items: center;
-      gap: 10px;
+      justify-content: space-between;
     }
-
-    /* Name tag */
     #name-tag {
-      background: #0f62fe;
-      color: #fff;
       font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 1px;
+      font-weight: 600;
+      color: #f4f4f4;
+      letter-spacing: .32px;
       text-transform: uppercase;
-      padding: 3px 10px;
-      border-radius: 20px;
     }
 
-    /* Avatar canvas */
-    #avatar { display: block; }
-
-    /* Speech bubble */
-    #bubble {
-      background: #f4f4f4;
-      border: 1px solid #e0e0e0;
-      border-radius: 10px;
-      padding: 6px 10px;
-      font-size: 12px;
-      color: #161616;
-      text-align: center;
-      width: 100%;
-      min-height: 32px;
+    /* Close — not draggable */
+    #close-btn {
+      -webkit-app-region: no-drag;
+      background: none;
+      border: none;
+      color: #8d8d8d;
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      padding: 0;
       display: flex;
       align-items: center;
       justify-content: center;
+      width: 20px;
+      height: 20px;
+    }
+    #close-btn:hover { color: var(--cds-support-error); }
+
+    /* ── Avatar area ── */
+    #avatar-area {
+      padding: var(--cds-spacing-04) var(--cds-spacing-04) var(--cds-spacing-02);
+      display: flex;
+      justify-content: center;
+    }
+    #avatar { display: block; }
+
+    /* ── Speech bubble (Carbon inline notification) ── */
+    #bubble {
+      margin: 0 var(--cds-spacing-04);
+      padding: var(--cds-spacing-02) var(--cds-spacing-03);
+      background: var(--cds-background);
+      border-left: 3px solid var(--cds-interactive);
+      font-size: 11px;
+      color: var(--cds-text-primary);
+      line-height: 1.4;
+      letter-spacing: .16px;
+      min-height: 28px;
+      display: flex;
+      align-items: center;
     }
 
-    /* Health bar */
-    #health-row {
-      width: 100%;
+    /* ── Health section ── */
+    #health-section {
+      padding: var(--cds-spacing-03) var(--cds-spacing-04) var(--cds-spacing-02);
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: var(--cds-spacing-01);
     }
-    #health-row label {
-      font-size: 11px;
-      color: #6f6f6f;
+    #health-label-row {
       display: flex;
       justify-content: space-between;
+      font-size: 11px;
+      color: var(--cds-text-secondary);
+      letter-spacing: .32px;
     }
+    /* Carbon Progress Bar */
     #hp-track {
       width: 100%;
-      height: 10px;
-      background: #e0e0e0;
-      border-radius: 5px;
+      height: 4px;
+      background: var(--cds-border-subtle-01);
       overflow: hidden;
     }
     #hp-fill {
       height: 100%;
-      background: #42be65;
-      border-radius: 5px;
+      background: var(--cds-support-success);
       transition: width .6s ease, background .6s ease;
     }
 
-    /* Task summary */
+    /* ── Task summary (Carbon helper text) ── */
     #task-summary {
+      padding: var(--cds-spacing-02) var(--cds-spacing-04) var(--cds-spacing-04);
       font-size: 11px;
-      color: #6f6f6f;
-      text-align: center;
+      color: var(--cds-text-secondary);
+      letter-spacing: .32px;
+      border-top: 1px solid var(--cds-border-subtle-01);
+      margin-top: var(--cds-spacing-02);
     }
-
-    /* Close button — not draggable */
-    #close-btn {
-      -webkit-app-region: no-drag;
-      position: absolute;
-      top: 14px;
-      right: 14px;
-      background: none;
-      border: none;
-      font-size: 16px;
-      color: #6f6f6f;
-      cursor: pointer;
-      line-height: 1;
-    }
-    #close-btn:hover { color: #da1e28; }
   </style>
 </head>
 <body>
-  <button id="close-btn" title="Close Bob">×</button>
 
-  <div id="card">
-    <div id="name-tag">IBM Bob</div>
-    <canvas id="avatar" width="90" height="90"></canvas>
-    <div id="bubble">Hello! Add some tasks!</div>
-    <div id="health-row">
-      <label><span>Health</span><span id="hp-pct">100%</span></label>
-      <div id="hp-track"><div id="hp-fill" style="width:100%"></div></div>
+  <div id="card" role="region" aria-label="IBM Bob status">
+
+    <div id="card-header">
+      <span id="name-tag">IBM Bob</span>
+      <button id="close-btn" title="Dismiss Bob" aria-label="Dismiss Bob">&#x2715;</button>
     </div>
-    <div id="task-summary">No tasks yet</div>
+
+    <div id="avatar-area">
+      <canvas id="avatar" width="88" height="88" aria-hidden="true"></canvas>
+    </div>
+
+    <div id="bubble" role="status" aria-live="polite">Hello! Add some tasks!</div>
+
+    <div id="health-section">
+      <div id="health-label-row">
+        <span>Health</span>
+        <span id="hp-pct">100%</span>
+      </div>
+      <div id="hp-track" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" aria-label="Bob's health">
+        <div id="hp-fill" style="width:100%"></div>
+      </div>
+    </div>
+
+    <div id="task-summary" aria-live="polite">No tasks yet</div>
+
   </div>
 
   <script>
-    /* ── Bob pixel avatar drawn on canvas ── */
+    /* ── Canvas avatar — Carbon palette ── */
     function drawBob(health) {
       const canvas = document.getElementById('avatar');
-      const ctx = canvas.getContext('2d');
+      const ctx    = canvas.getContext('2d');
       const W = canvas.width, H = canvas.height;
       ctx.clearRect(0, 0, W, H);
 
-      // mood based on health
-      const mood = health > 60 ? 'happy' : health > 30 ? 'neutral' : 'sad';
+      const mood      = health > 60 ? 'happy' : health > 30 ? 'neutral' : 'sad';
+      // Carbon: Blue 60 / Yellow 30 / Red 60
       const bodyColor = health > 60 ? '#0f62fe' : health > 30 ? '#f1c21b' : '#da1e28';
 
-      // body (rounded rect)
+      // body
       ctx.fillStyle = bodyColor;
-      roundRect(ctx, 20, 30, 50, 45, 12);
+      roundRect(ctx, 19, 29, 50, 46, 0); // Carbon tiles use sharp corners
       ctx.fill();
 
       // head
       ctx.fillStyle = '#ffd6a5';
-      roundRect(ctx, 25, 5, 40, 36, 14);
+      roundRect(ctx, 24, 4, 40, 36, 0);
       ctx.fill();
 
       // eyes
       ctx.fillStyle = '#161616';
       ctx.beginPath();
-      ctx.arc(36, 20, 4, 0, Math.PI * 2);
-      ctx.arc(54, 20, 4, 0, Math.PI * 2);
+      ctx.arc(35, 19, 4, 0, Math.PI * 2);
+      ctx.arc(53, 19, 4, 0, Math.PI * 2);
       ctx.fill();
 
       // eye highlights
-      ctx.fillStyle = '#fff';
+      ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.arc(38, 18, 1.5, 0, Math.PI * 2);
-      ctx.arc(56, 18, 1.5, 0, Math.PI * 2);
+      ctx.arc(37, 17, 1.5, 0, Math.PI * 2);
+      ctx.arc(55, 17, 1.5, 0, Math.PI * 2);
       ctx.fill();
 
       // mouth
       ctx.strokeStyle = '#161616';
       ctx.lineWidth = 2.5;
-      ctx.lineCap = 'round';
+      ctx.lineCap = 'butt'; // Carbon — no rounded caps
       ctx.beginPath();
       if (mood === 'happy') {
-        ctx.arc(45, 28, 8, 0.2, Math.PI - 0.2);
+        ctx.arc(44, 27, 8, 0.2, Math.PI - 0.2);
       } else if (mood === 'neutral') {
-        ctx.moveTo(38, 31); ctx.lineTo(52, 31);
+        ctx.moveTo(37, 30); ctx.lineTo(51, 30);
       } else {
-        ctx.arc(45, 36, 8, Math.PI + 0.2, -0.2);
+        ctx.arc(44, 35, 8, Math.PI + 0.2, -0.2);
       }
       ctx.stroke();
 
       // arms
       ctx.strokeStyle = bodyColor;
       ctx.lineWidth = 6;
-      ctx.lineCap = 'round';
-      // left arm
-      ctx.beginPath(); ctx.moveTo(20, 45); ctx.lineTo(6, mood === 'happy' ? 36 : 50); ctx.stroke();
-      // right arm
-      ctx.beginPath(); ctx.moveTo(70, 45); ctx.lineTo(84, mood === 'happy' ? 36 : 50); ctx.stroke();
+      ctx.lineCap = 'butt';
+      ctx.beginPath(); ctx.moveTo(19, 44); ctx.lineTo(5, mood === 'happy' ? 35 : 50); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(69, 44); ctx.lineTo(83, mood === 'happy' ? 35 : 50); ctx.stroke();
 
       // legs
       ctx.lineWidth = 7;
-      ctx.beginPath(); ctx.moveTo(33, 75); ctx.lineTo(28, 88); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(57, 75); ctx.lineTo(62, 88); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(32, 75); ctx.lineTo(27, 87); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(56, 75); ctx.lineTo(61, 87); ctx.stroke();
     }
 
     function roundRect(ctx, x, y, w, h, r) {
+      if (r === 0) {
+        ctx.beginPath();
+        ctx.rect(x, y, w, h);
+        return;
+      }
       ctx.beginPath();
       ctx.moveTo(x + r, y);
       ctx.lineTo(x + w - r, y);
@@ -205,52 +260,40 @@
 
     /* ── Quips ── */
     const QUIPS = {
-      happy: [
-        "You're crushing it! 🎉",
-        "Look at you go!",
-        "Tasks done = Bob happy!",
-        "Keep up the great work!",
-        "Productivity level: max!",
-      ],
-      neutral: [
-        "Almost there, keep going!",
-        "A few more tasks to go.",
-        "You've got this!",
-        "Steady progress!",
-        "Half way there!",
-      ],
-      sad: [
-        "I believe in you…",
-        "Please complete some tasks!",
-        "I need those checkmarks…",
-        "Don't give up on me!",
-        "Tasks = my life force.",
-      ],
+      happy:   ["You're crushing it!", "Tasks done = Bob happy!", "Productivity level: max!", "Keep it up!", "Look at you go!"],
+      neutral: ["Almost there!", "A few more tasks to go.", "You've got this.", "Steady progress.", "Half way there!"],
+      sad:     ["I believe in you…", "Please complete some tasks!", "I need those checkmarks…", "Don't give up on me!", "Tasks = my life force."],
     };
 
     function getQuip(health) {
       const mood = health > 60 ? 'happy' : health > 30 ? 'neutral' : 'sad';
-      const arr = QUIPS[mood];
+      const arr  = QUIPS[mood];
       return arr[Math.floor(Math.random() * arr.length)];
     }
 
-    /* ── State + render ── */
+    /* ── State ── */
     let state = { tasks: [], health: 100 };
-    let quipTimer = null;
 
     function updateUI() {
       const pct = state.health;
-      document.getElementById('hp-fill').style.width = pct + '%';
-      document.getElementById('hp-fill').style.background =
-        pct > 60 ? '#42be65' : pct > 30 ? '#f1c21b' : '#da1e28';
+
+      // Progress bar
+      const fill = document.getElementById('hp-fill');
+      fill.style.width      = pct + '%';
+      fill.style.background = pct > 60 ? '#24a148' : pct > 30 ? '#f1c21b' : '#da1e28';
       document.getElementById('hp-pct').textContent = pct + '%';
+      document.getElementById('hp-track').setAttribute('aria-valuenow', pct);
 
+      // Task summary
       const tasks = state.tasks || [];
-      const done = tasks.filter(t => t.done).length;
+      const done  = tasks.filter(t => t.done).length;
       document.getElementById('task-summary').textContent =
-        tasks.length === 0 ? 'No tasks yet' : done + ' / ' + tasks.length + ' tasks done';
+        tasks.length === 0 ? 'No tasks yet' : done + '\u202f/\u202f' + tasks.length + ' tasks complete';
 
+      // Speech bubble
       document.getElementById('bubble').textContent = getQuip(pct);
+
+      // Avatar
       drawBob(pct);
     }
 
@@ -273,8 +316,8 @@
       if (window.electronAPI) window.electronAPI.closeBobPopup();
     });
 
-    /* ── Rotate quip every 8 s ── */
-    quipTimer = setInterval(updateUI, 8000);
+    /* Rotate quip every 8 s */
+    setInterval(updateUI, 8000);
 
     loadState();
     updateUI();
