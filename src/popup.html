@@ -157,7 +157,7 @@
     </div>
 
     <div id="avatar-area">
-      <canvas id="avatar" width="88" height="88" aria-hidden="true"></canvas>
+      <img id="avatar" src="assets/bob.svg" width="88" height="88" alt="Bob" aria-hidden="true" />
     </div>
 
     <div id="bubble" role="status" aria-live="polite">Hello! Add some tasks!</div>
@@ -177,87 +177,6 @@
   </div>
 
   <script>
-    /* ── Canvas avatar — Carbon palette ── */
-    function drawBob(health) {
-      const canvas = document.getElementById('avatar');
-      const ctx    = canvas.getContext('2d');
-      const W = canvas.width, H = canvas.height;
-      ctx.clearRect(0, 0, W, H);
-
-      const mood      = health > 60 ? 'happy' : health > 30 ? 'neutral' : 'sad';
-      // Carbon: Blue 60 / Yellow 30 / Red 60
-      const bodyColor = health > 60 ? '#0f62fe' : health > 30 ? '#f1c21b' : '#da1e28';
-
-      // body
-      ctx.fillStyle = bodyColor;
-      roundRect(ctx, 19, 29, 50, 46, 0); // Carbon tiles use sharp corners
-      ctx.fill();
-
-      // head
-      ctx.fillStyle = '#ffd6a5';
-      roundRect(ctx, 24, 4, 40, 36, 0);
-      ctx.fill();
-
-      // eyes
-      ctx.fillStyle = '#161616';
-      ctx.beginPath();
-      ctx.arc(35, 19, 4, 0, Math.PI * 2);
-      ctx.arc(53, 19, 4, 0, Math.PI * 2);
-      ctx.fill();
-
-      // eye highlights
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.arc(37, 17, 1.5, 0, Math.PI * 2);
-      ctx.arc(55, 17, 1.5, 0, Math.PI * 2);
-      ctx.fill();
-
-      // mouth
-      ctx.strokeStyle = '#161616';
-      ctx.lineWidth = 2.5;
-      ctx.lineCap = 'butt'; // Carbon — no rounded caps
-      ctx.beginPath();
-      if (mood === 'happy') {
-        ctx.arc(44, 27, 8, 0.2, Math.PI - 0.2);
-      } else if (mood === 'neutral') {
-        ctx.moveTo(37, 30); ctx.lineTo(51, 30);
-      } else {
-        ctx.arc(44, 35, 8, Math.PI + 0.2, -0.2);
-      }
-      ctx.stroke();
-
-      // arms
-      ctx.strokeStyle = bodyColor;
-      ctx.lineWidth = 6;
-      ctx.lineCap = 'butt';
-      ctx.beginPath(); ctx.moveTo(19, 44); ctx.lineTo(5, mood === 'happy' ? 35 : 50); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(69, 44); ctx.lineTo(83, mood === 'happy' ? 35 : 50); ctx.stroke();
-
-      // legs
-      ctx.lineWidth = 7;
-      ctx.beginPath(); ctx.moveTo(32, 75); ctx.lineTo(27, 87); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(56, 75); ctx.lineTo(61, 87); ctx.stroke();
-    }
-
-    function roundRect(ctx, x, y, w, h, r) {
-      if (r === 0) {
-        ctx.beginPath();
-        ctx.rect(x, y, w, h);
-        return;
-      }
-      ctx.beginPath();
-      ctx.moveTo(x + r, y);
-      ctx.lineTo(x + w - r, y);
-      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-      ctx.lineTo(x + w, y + h - r);
-      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-      ctx.lineTo(x + r, y + h);
-      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-      ctx.lineTo(x, y + r);
-      ctx.quadraticCurveTo(x, y, x + r, y);
-      ctx.closePath();
-    }
-
     /* ── Quips ── */
     const QUIPS = {
       happy:   ["You're crushing it!", "Tasks done = Bob happy!", "Productivity level: max!", "Keep it up!", "Look at you go!"],
@@ -292,9 +211,6 @@
 
       // Speech bubble
       document.getElementById('bubble').textContent = getQuip(pct);
-
-      // Avatar
-      drawBob(pct);
     }
 
     function loadState() {
