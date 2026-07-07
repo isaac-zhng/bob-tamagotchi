@@ -441,6 +441,23 @@
       outline: none;
     }
 
+    /* ── Streak bar ── */
+    #streak-bar {
+      display: flex;
+      align-items: center;
+      gap: var(--cds-spacing-03);
+      padding: var(--cds-spacing-03) var(--cds-spacing-05);
+      background: var(--cds-layer-01);
+      border-bottom: 1px solid var(--cds-border-subtle-01);
+      font-size: 13px;
+      color: var(--cds-text-secondary);
+      letter-spacing: .16px;
+    }
+    #streak-bar strong {
+      color: var(--cds-text-primary);
+      font-weight: 600;
+    }
+
     /* ── Empty state (Carbon inline notification style) ── */
     #empty-msg {
       display: none;
@@ -517,7 +534,7 @@
 
   <!-- Carbon UI Shell Header -->
   <header class="cds--header" role="banner">
-    <a class="cds--header__name" href="#">IBM Bob <span>Notepad</span></a>
+    <a class="cds--header__name" href="#">IBM Bob <span>Todogotchi</span></a>
     <div class="header-health" aria-label="Bob's health">
       <span id="health-label">Bob: 100%</span>
       <div class="cds--progress-bar--header" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
@@ -551,6 +568,11 @@
       </select>
     </div>
     <button id="add-btn" class="cds--btn--primary">Add task</button>
+  </div>
+
+  <!-- Streak bar -->
+  <div id="streak-bar" aria-live="polite">
+    🔥 Streak: <strong id="streak-count">0</strong> <span id="streak-unit">days</span>
   </div>
 
   <!-- Checklist tabs -->
@@ -706,7 +728,9 @@
       daily: [], weekly: [], monthly: [],
       activeTab: 'daily',
       health: 100,
-      bobVisible: false
+      bobVisible: false,
+      streak: 0,
+      lastStreakDate: null   // ISO date string "YYYY-MM-DD" of last task-added day
     };
 
     function activeTasks() { return state[state.activeTab]; }
@@ -747,18 +771,23 @@
       }
     }
 
-    function loadState() {
+    async function loadState() {
       try {
-        const saved = localStorage.getItem('bob-state');
+        let saved = null;
+        if (window.electronAPI) {
+          saved = await window.electronAPI.storeLoad();
+        }
+        // Fall back to localStorage for non-Electron / first migration
+        if (!saved) saved = localStorage.getItem('bob-state');
         if (saved) {
-          const parsed = JSON.parse(saved);
+          const parsed = typeof saved === 'string' ? JSON.parse(saved) : saved;
           // Migrate old single-array format
           if (Array.isArray(parsed.tasks)) {
-            state.daily     = parsed.tasks;
-            state.weekly    = [];
-            state.monthly   = [];
-            state.activeTab = 'daily';
-            state.health    = parsed.health ?? 100;
+            state.daily      = parsed.tasks;
+            state.weekly     = [];
+            state.monthly    = [];
+            state.activeTab  = 'daily';
+            state.health     = parsed.health ?? 100;
             state.bobVisible = parsed.bobVisible ?? false;
           } else {
             state = parsed;
@@ -768,8 +797,13 @@
     }
 
     function saveAndBroadcast() {
-      localStorage.setItem('bob-state', JSON.stringify(state));
-      if (window.electronAPI) window.electronAPI.broadcastState(JSON.stringify(state));
+      const json = JSON.stringify(state);
+      if (window.electronAPI) {
+        window.electronAPI.storeSave(json);
+      } else {
+        localStorage.setItem('bob-state', json);
+      }
+      if (window.electronAPI) window.electronAPI.broadcastState(json);
     }
 
     /* ── Health calculation ── */
@@ -786,6 +820,11 @@
       const empty = document.getElementById('empty-msg');
       list.innerHTML = '';
 
+      // Update streak display
+      const streakCount = state.streak || 0;
+      document.getElementById('streak-count').textContent = streakCount;
+      document.getElementById('streak-unit').textContent = streakCount === 1 ? 'day' : 'days';
+
       // Sync tab active state and update deadline input
       document.querySelectorAll('.checklist-tab').forEach(btn => {
         const active = btn.dataset.tab === state.activeTab;
@@ -797,9 +836,16 @@
       const deadlineInput = document.getElementById('deadline-input');
       const deadlineLabel = document.getElementById('deadline-label');
       if (state.activeTab === 'daily') {
-        if (deadlineInput.tagName === 'SELECT') {
-          populateTimeOptions(deadlineInput);
+        // Swap back to <select> if weekly/monthly left a date input
+        if (deadlineInput.tagName !== 'SELECT') {
+          const parent = deadlineInput.parentElement;
+          const newSelect = document.createElement('select');
+          newSelect.id = 'deadline-input';
+          newSelect.className = 'cds--select-input';
+          newSelect.setAttribute('aria-label', 'Task deadline');
+          parent.replaceChild(newSelect, deadlineInput);
         }
+        populateTimeOptions(document.getElementById('deadline-input'));
         deadlineLabel.textContent = 'Deadline (time)';
       } else {
         if (deadlineInput.tagName === 'SELECT') {
@@ -963,10 +1009,58 @@
     setInterval(() => updateBobWidget(state.health), 10000);
 
     /* ── Actions ── */
+    /* ── Streak helpers ── */
+    function todayKey() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    function isWeekend(dateKey) {
+      // dateKey is "YYYY-MM-DD"; Date constructor treats this as UTC midnight,
+      // so add 'T12:00' to keep it in local timezone.
+      const d = new Date(dateKey + 'T12:00:00');
+      return d.getDay() === 0 || d.getDay() === 6; // 0=Sun, 6=Sat
+    }
+
+    function prevWeekday(dateKey) {
+      const d = new Date(dateKey + 'T12:00:00');
+      do { d.setDate(d.getDate() - 1); } while (d.getDay() === 0 || d.getDay() === 6);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    function checkStreakExpiry() {
+      // Run on boot. If today is a weekday and the last active weekday wasn't
+      // the immediately preceding weekday, the streak is broken → reset to 0.
+      if (!state.lastStreakDate) return;     // never started, nothing to reset
+      const today = todayKey();
+      if (isWeekend(today)) return;          // weekend — grace period, no reset
+      if (state.lastStreakDate === today) return; // already active today, fine
+      // If the previous weekday wasn't the last active date, streak is broken.
+      if (prevWeekday(today) !== state.lastStreakDate) {
+        state.streak = 0;
+        state.lastStreakDate = null;
+      }
+    }
+
+    function updateStreak() {
+      const today = todayKey();
+      if (isWeekend(today)) return;          // never count weekend additions
+      if (state.lastStreakDate === today) return; // already counted today
+
+      const expected = state.lastStreakDate ? prevWeekday(today) : null;
+      if (expected && state.lastStreakDate === expected) {
+        state.streak += 1;                   // continued streak
+      } else {
+        state.streak = 1;                    // reset / start
+      }
+      state.lastStreakDate = today;
+    }
+
     function addTask(text, deadline) {
       text = text.trim();
       if (!text) return;
       activeTasks().push({ id: Date.now(), text, done: false, deadline: deadline || null });
+      updateStreak();
       recalcHealth();
       saveAndBroadcast();
       render();
@@ -1132,9 +1226,12 @@
       populateTimeOptions(deadlineInput);
     }
     
-    loadState();
-    saveAndBroadcast();
-    render();
+    (async () => {
+      await loadState();
+      checkStreakExpiry();
+      saveAndBroadcast();
+      render();
+    })();
   </script>
 </body>
 </html>

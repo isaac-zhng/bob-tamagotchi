@@ -1,5 +1,7 @@
 const { app, BrowserWindow, ipcMain, screen } = require('electron');
 const path = require('path');
+const Store = require('electron-store').default;
+const store = new Store({ name: 'bob-state' });
 
 let mainWindow = null;
 let bobWindow  = null;
@@ -7,13 +9,14 @@ let bobWindow  = null;
 function createMainWindow() {
   mainWindow = new BrowserWindow({
     width: 820, height: 700, minWidth: 600, minHeight: 500,
-    title: 'IBM Bob Notepad',
+    title: 'IBM Bob Todogotchi',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true, nodeIntegration: false,
     },
   });
   mainWindow.loadFile(path.join(__dirname, 'src', 'index.html'));
+  mainWindow.on('ready-to-show', () => mainWindow.setTitle('IBM Bob Todogotchi'));
   mainWindow.on('closed', () => {
     mainWindow = null;
     if (bobWindow && !bobWindow.isDestroyed()) bobWindow.close();
@@ -44,6 +47,9 @@ function createBobWindow() {
 
 app.whenReady().then(() => {
   // Register IPC handlers
+  ipcMain.on('store-save', (_e, stateJSON) => store.set('state', stateJSON));
+  ipcMain.handle('store-load', () => store.get('state', null));
+
   ipcMain.on('open-bob-popup',  () => createBobWindow());
   ipcMain.on('close-bob-popup', () => { if (bobWindow && !bobWindow.isDestroyed()) bobWindow.close(); });
   let lastStateJSON = null;

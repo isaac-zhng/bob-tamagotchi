@@ -1,5 +1,6 @@
 {
-  "name": "ibm-bob-notepad",
+  "name": "ibm-bob-todogotchi",
+  "productName": "IBM Bob Todogotchi",
   "version": "1.0.0",
   "description": "IBM Bob Checklist Notepad & Tamagotchi",
   "main": "main.js",
