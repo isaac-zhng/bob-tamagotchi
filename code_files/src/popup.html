@@ -235,7 +235,17 @@
     /* ── IPC sync ── */
     if (window.electronAPI) {
       window.electronAPI.onStateSync(json => {
-        try { state = JSON.parse(json); } catch (_) {}
+        try {
+          const parsed = JSON.parse(json);
+          state = {
+            daily:          parsed.daily         ?? [],
+            weekly:         parsed.weekly        ?? [],
+            monthly:        parsed.monthly       ?? [],
+            happiness:      parsed.happiness     ?? parsed.health ?? 100,
+            streak:         parsed.streak        ?? 0,
+            lastStreakDate: parsed.lastStreakDate ?? null,
+          };
+        } catch (_) {}
         updateUI();
       });
       // Request current state from main window on load

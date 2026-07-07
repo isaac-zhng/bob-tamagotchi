@@ -788,7 +788,16 @@
             state.happiness  = parsed.happiness ?? parsed.health ?? 100;
             state.bobVisible = parsed.bobVisible ?? false;
           } else {
-            state = parsed;
+            state = {
+              daily:          parsed.daily         ?? [],
+              weekly:         parsed.weekly        ?? [],
+              monthly:        parsed.monthly       ?? [],
+              activeTab:      parsed.activeTab     ?? 'daily',
+              happiness:      parsed.happiness     ?? parsed.health ?? 100,
+              bobVisible:     parsed.bobVisible    ?? false,
+              streak:         parsed.streak        ?? 0,
+              lastStreakDate: parsed.lastStreakDate ?? null,
+            };
           }
         }
       } catch (_) {}
